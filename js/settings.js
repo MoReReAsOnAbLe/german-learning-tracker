@@ -5,6 +5,7 @@
 import { getSettings, saveSettings, getChannels, removeChannel, exportData, resetData, getVideos, updateVideoUserFields } from './store.js';
 import { updateSidebarStats } from './stats.js';
 import { detectCEFRFromTitle } from './import.js';
+import { getCurrentSession, pushToCloud, loadFromCloud, getLastSyncAt } from './auth.js';
 
 export function renderSettings(container) {
   container.innerHTML = '';
@@ -16,6 +17,7 @@ export function renderSettings(container) {
 
   container.appendChild(buildGoalSection());
   container.appendChild(buildChannelsSection());
+  container.appendChild(buildCloudSection());
   container.appendChild(buildDataSection());
 }
 
@@ -107,6 +109,76 @@ function buildChannelsSection() {
       }
     });
   });
+
+  return section;
+}
+
+// ─── Cloud sync ───────────────────────────────────────────────
+
+function buildCloudSection() {
+  const session = getCurrentSession();
+  const section = document.createElement('div');
+  section.className = 'settings-section';
+  section.id = 'cloud-sync-section';
+
+  if (!session) {
+    section.innerHTML = `
+      <div class="settings-section-title">Cloud Sync</div>
+      <p style="color:var(--text-muted);font-size:13px;padding:12px 0">
+        Sign in to enable cloud sync and access your data from any device.
+      </p>`;
+    return section;
+  }
+
+  const lastSync = getLastSyncAt();
+  const lastSyncText = lastSync
+    ? `Last synced ${new Date(lastSync).toLocaleTimeString()}`
+    : 'Not synced this session';
+
+  section.innerHTML = `
+    <div class="settings-section-title">Cloud Sync</div>
+    <div class="settings-row">
+      <div>
+        <div class="settings-label">Push to cloud</div>
+        <div class="settings-desc">Upload your local data to Supabase right now</div>
+      </div>
+      <button class="btn btn-surface" id="push-cloud-btn">Push Now</button>
+    </div>
+    <div class="settings-row">
+      <div>
+        <div class="settings-label">Pull from cloud</div>
+        <div class="settings-desc">Overwrite local data with the latest cloud save</div>
+      </div>
+      <button class="btn btn-surface" id="pull-cloud-btn">Pull Now</button>
+    </div>
+    <div class="settings-sync-status" id="sync-status">${escapeHTML(lastSyncText)}</div>
+  `;
+
+  section.querySelector('#push-cloud-btn').addEventListener('click', async (e) => {
+    const btn = e.currentTarget;
+    btn.disabled = true; btn.textContent = 'Pushing…';
+    await pushToCloud();
+    btn.disabled = false; btn.textContent = 'Push Now';
+    refreshSyncStatus();
+  });
+
+  section.querySelector('#pull-cloud-btn').addEventListener('click', async (e) => {
+    if (!confirm('Pull from cloud? This will overwrite your local data with the cloud save.')) return;
+    const btn = e.currentTarget;
+    btn.disabled = true; btn.textContent = 'Pulling…';
+    await loadFromCloud();
+    btn.disabled = false; btn.textContent = 'Pull Now';
+    refreshSyncStatus();
+    window.dispatchEvent(new Event('authChanged'));
+  });
+
+  function refreshSyncStatus() {
+    const el = document.getElementById('sync-status');
+    const t = getLastSyncAt();
+    if (el && t) el.textContent = `Last synced ${new Date(t).toLocaleTimeString()}`;
+  }
+
+  window.addEventListener('cloudSynced', refreshSyncStatus);
 
   return section;
 }

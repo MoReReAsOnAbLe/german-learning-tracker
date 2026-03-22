@@ -1785,3 +1785,9 @@ input, select, textarea { font-family: inherit; }
   background: rgba(244, 67, 54, 0.08);
   border-color: rgba(244, 67, 54, 0.2);
 }
+
+.settings-sync-status {
+  font-size: 12px;
+  color: var(--text-muted);
+  padding: 4px 0 8px;
+}

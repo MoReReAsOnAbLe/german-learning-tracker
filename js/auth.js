@@ -31,9 +31,16 @@ const KEYS = {
   META:           'glt_meta',
 };
 
-// ─── Debounced cloud sync ────────────────────────────────────
+// ─── Session + sync state ────────────────────────────────────
 
-let syncTimer = null;
+let _currentSession = null;
+let _lastSyncAt     = null;
+let syncTimer       = null;
+
+export function getCurrentSession() { return _currentSession; }
+export function getLastSyncAt()     { return _lastSyncAt; }
+
+// ─── Debounced cloud sync ────────────────────────────────────
 
 function scheduleSyncToCloud() {
   clearTimeout(syncTimer);
@@ -43,7 +50,7 @@ function scheduleSyncToCloud() {
 async function syncToCloud() {
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) return;
-  await supabase.from('user_data').upsert({
+  const { error } = await supabase.from('user_data').upsert({
     user_id:        session.user.id,
     settings:       getSettings(),
     videos:         getVideos(),
@@ -53,6 +60,16 @@ async function syncToCloud() {
     meta:           getMeta(),
     updated_at:     new Date().toISOString(),
   });
+  if (!error) {
+    _lastSyncAt = Date.now();
+    window.dispatchEvent(new Event('cloudSynced'));
+  }
+}
+
+/** Cancels the debounce and syncs immediately. Use for manual push or tab-hide flush. */
+export async function pushToCloud() {
+  clearTimeout(syncTimer);
+  await syncToCloud();
 }
 
 // ─── Load cloud data into localStorage ───────────────────────
@@ -115,6 +132,7 @@ export async function initAuth() {
 
   // Restore session from a previous page load
   const session = await getSession();
+  _currentSession = session;
   if (session) {
     await loadFromCloud();
     updateAuthUI(session.user.email);
@@ -122,8 +140,16 @@ export async function initAuth() {
     updateAuthUI(null);
   }
 
+  // Flush any pending debounced sync immediately when the tab is hidden/closed
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden' && _currentSession) {
+      pushToCloud();
+    }
+  });
+
   // React to sign-in / sign-out across tabs or after OAuth redirects
   supabase.auth.onAuthStateChange(async (event, session) => {
+    _currentSession = session;
     if (event === 'SIGNED_IN') {
       await loadFromCloud();
       updateAuthUI(session.user.email);
