@@ -88,6 +88,7 @@ export function renderLibrary(container) {
   bulkBar.id = 'bulk-bar';
   bulkBar.innerHTML = `
     <span class="bulk-count" id="bulk-count">0 selected</span>
+    <button class="btn btn-surface btn-sm" id="bulk-select-all">Select All</button>
     <button class="btn btn-surface btn-sm" id="bulk-mark-watched">Mark Watched</button>
     <div class="bulk-difficulty-group">
       <span class="bulk-label">Set difficulty:</span>
@@ -250,7 +251,7 @@ function updateBulkBar() {
   const bar = document.getElementById('bulk-bar');
   if (!bar) return;
   const count = selectedVideoIds.size;
-  if (count > 0) {
+  if (selectionMode) {
     bar.classList.remove('hidden');
     const countEl = document.getElementById('bulk-count');
     if (countEl) countEl.textContent = `${count} selected`;
@@ -271,8 +272,8 @@ function attachLibraryEvents(container, grid, bulkBar) {
     selectedVideoIds.clear();
     const btn = container.querySelector('#select-toggle-btn');
     if (btn) btn.textContent = selectionMode ? 'Cancel Select' : 'Select';
-    bulkBar.classList.add('hidden');
     renderGrid(grid);
+    updateBulkBar();
   });
 
   // Search
@@ -326,6 +327,15 @@ function attachLibraryEvents(container, grid, bulkBar) {
     selectedVideoIds.clear();
     bulkBar.classList.add('hidden');
     renderGrid(grid);
+  });
+
+  // Select all visible videos
+  bulkBar.querySelector('#bulk-select-all')?.addEventListener('click', () => {
+    const videos = getVideos();
+    const filtered = applyFilters(Object.values(videos), currentFilters);
+    filtered.forEach(v => selectedVideoIds.add(v.videoId));
+    renderGrid(grid);
+    updateBulkBar();
   });
 
   // Cancel selection
