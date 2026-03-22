@@ -88,16 +88,15 @@
         </div>
         <div class="player-controls-row">
           <div class="player-difficulty-group">
-            <label for="player-difficulty">Difficulty:</label>
-            <select id="player-difficulty" class="difficulty-select">
-              <option value="unrated">Unrated</option>
-              <option value="A1">A1</option>
-              <option value="A2">A2</option>
-              <option value="B1">B1</option>
-              <option value="B2">B2</option>
-              <option value="C1">C1</option>
-              <option value="C2">C2</option>
-            </select>
+            <label>Difficulty:</label>
+            <div class="difficulty-checkboxes" id="player-difficulty-checks">
+              <label><input type="checkbox" value="A1"> A1</label>
+              <label><input type="checkbox" value="A2"> A2</label>
+              <label><input type="checkbox" value="B1"> B1</label>
+              <label><input type="checkbox" value="B2"> B2</label>
+              <label><input type="checkbox" value="C1"> C1</label>
+              <label><input type="checkbox" value="C2"> C2</label>
+            </div>
           </div>
           <div class="player-tags-group">
             <label for="player-tags">Tags:</label>
@@ -120,6 +119,10 @@
       </button>
       <h2 class="modal-title">Import YouTube Channel</h2>
       <p class="modal-subtitle">Enter a YouTube channel handle or URL. All videos will be added to your library.</p>
+      <label class="import-option-row">
+        <input type="checkbox" id="import-skip-shorts" checked />
+        <span>Skip YouTube Shorts (≤ 60 seconds)</span>
+      </label>
       <div class="import-input-row">
         <input type="text" id="import-input" class="import-channel-input" placeholder="@ComprehensibleGerman or youtube.com/@..." />
         <button id="import-btn" class="btn btn-accent">Import</button>

@@ -2,7 +2,7 @@
  * library.js — Video library page: card grid, filters, search.
  */
 
-import { getVideos } from './store.js';
+import { getVideos, getChannels } from './store.js';
 import { formatDuration } from './youtube.js';
 
 const LEVELS = ['all', 'A1', 'A2', 'B1', 'B2', 'C1', 'C2', 'unrated'];
@@ -11,6 +11,7 @@ let currentFilters = {
   level:       'all',
   search:      '',
   hideWatched: false,
+  channel:     'all',
 };
 
 // Callback set by app.js so library can open the player
@@ -42,6 +43,12 @@ export function renderLibrary(container) {
   toolbar.innerHTML = `
     <input type="text" class="search-input" id="library-search"
            placeholder="Search videos…" value="${escapeAttr(currentFilters.search)}" />
+    <select class="channel-filter" id="channel-filter">
+      <option value="all">All channels</option>
+      ${Object.values(getChannels()).map(ch =>
+        `<option value="${escapeAttr(ch.channelId)}"${currentFilters.channel === ch.channelId ? ' selected' : ''}>${escapeHTML(ch.channelTitle)}</option>`
+      ).join('')}
+    </select>
     <div class="filter-chips" id="difficulty-chips">
       ${LEVELS.map(l => `
         <button class="chip ${currentFilters.level === l ? 'active' : ''}" data-level="${l}">
@@ -109,8 +116,10 @@ function buildVideoCard(video) {
     ? Math.min(100, Math.round((video.watchedSeconds / video.durationSeconds) * 100))
     : 0;
 
-  const diffClass = `diff-${video.difficulty || 'unrated'}`;
-  const diffLabel = video.difficulty || 'Unrated';
+  const diffLevels = video.difficulty || [];
+  const diffBadgesHTML = diffLevels.length === 0
+    ? '<span class="difficulty-badge diff-unrated">Unrated</span>'
+    : diffLevels.map(l => `<span class="difficulty-badge diff-${l}">${l}</span>`).join('');
 
   card.innerHTML = `
     <div class="video-thumb-wrap">
@@ -134,7 +143,7 @@ function buildVideoCard(video) {
       <div class="video-title">${escapeHTML(video.title)}</div>
       <div class="video-meta-row">
         <span class="video-channel">${escapeHTML(video.channelTitle || '')}</span>
-        <span class="difficulty-badge ${diffClass}">${diffLabel}</span>
+        <div class="difficulty-badges">${diffBadgesHTML}</div>
       </div>
     </div>
   `;
@@ -170,15 +179,28 @@ function attachLibraryEvents(container, grid) {
     currentFilters.hideWatched = e.target.checked;
     renderGrid(grid);
   });
+
+  // Channel filter
+  container.querySelector('#channel-filter')?.addEventListener('change', (e) => {
+    currentFilters.channel = e.target.value;
+    renderGrid(grid);
+  });
 }
 
 // ─── Filtering ───────────────────────────────────────────────
 
-export function applyFilters(videos, { level, search, hideWatched }) {
+export function applyFilters(videos, { level, search, hideWatched, channel }) {
   return videos.filter(v => {
     if (hideWatched && v.completed) return false;
+    if (channel && channel !== 'all') {
+      if (v.channelId !== channel) return false;
+    }
     if (level && level !== 'all') {
-      if (v.difficulty !== level) return false;
+      if (level === 'unrated') {
+        if ((v.difficulty || []).length > 0) return false;
+      } else {
+        if (!(v.difficulty || []).includes(level)) return false;
+      }
     }
     if (search) {
       const q = search.toLowerCase();

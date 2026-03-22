@@ -2,8 +2,9 @@
  * settings.js — Settings page: daily goal, channels list, export, reset.
  */
 
-import { getSettings, saveSettings, getChannels, removeChannel, exportData, resetData } from './store.js';
+import { getSettings, saveSettings, getChannels, removeChannel, exportData, resetData, getVideos, updateVideoUserFields } from './store.js';
 import { updateSidebarStats } from './stats.js';
+import { detectCEFRFromTitle } from './import.js';
 
 export function renderSettings(container) {
   container.innerHTML = '';
@@ -119,6 +120,13 @@ function buildDataSection() {
     <div class="settings-section-title">Data Management</div>
     <div class="settings-row">
       <div>
+        <div class="settings-label">Scan video titles for CEFR levels</div>
+        <div class="settings-desc">Updates unrated videos whose titles contain A1–C2 difficulty markers</div>
+      </div>
+      <button class="btn btn-surface" id="scan-cefr-btn">Scan Titles</button>
+    </div>
+    <div class="settings-row">
+      <div>
         <div class="settings-label">Export data</div>
         <div class="settings-desc">Download all your watch history and settings as JSON</div>
       </div>
@@ -142,6 +150,7 @@ function buildDataSection() {
     </div>
   `;
 
+  section.querySelector('#scan-cefr-btn').addEventListener('click', handleScanCEFR);
   section.querySelector('#export-btn').addEventListener('click', handleExport);
   section.querySelector('#reset-btn').addEventListener('click', handleReset);
 
@@ -173,6 +182,21 @@ function handleReset() {
 
   resetData();
   window.location.reload();
+}
+
+function handleScanCEFR() {
+  const videos = getVideos();
+  let updated = 0;
+  for (const v of Object.values(videos)) {
+    if ((v.difficulty || []).length === 0) {
+      const detected = detectCEFRFromTitle(v.title);
+      if (detected.length > 0) {
+        updateVideoUserFields(v.videoId, { difficulty: detected });
+        updated++;
+      }
+    }
+  }
+  alert(`Scanned titles. Updated ${updated} video${updated !== 1 ? 's' : ''}.`);
 }
 
 // ─── Helpers ─────────────────────────────────────────────────

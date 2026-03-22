@@ -258,6 +258,17 @@ export function resetData() {
 // ─── Boot ────────────────────────────────────────────────────
 
 export function boot() {
+  // Migrate difficulty from string to array (v1 → v2)
+  const videos = getVideos();
+  let migrated = false;
+  for (const v of Object.values(videos)) {
+    if (typeof v.difficulty === 'string') {
+      v.difficulty = v.difficulty === 'unrated' ? [] : [v.difficulty];
+      migrated = true;
+    }
+  }
+  if (migrated) writeJSON(KEYS.VIDEOS, videos);
+
   // Ensure meta is up-to-date on app start
   recalculateMeta();
 }

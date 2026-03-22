@@ -12,6 +12,32 @@
 import { fetchChannelInfo, fetchPlaylistPage, fetchDurations, parseHandle } from './youtube.js';
 import { bulkSaveVideos, saveChannel } from './store.js';
 
+// ─── CEFR detection ──────────────────────────────────────────
+
+const CEFR_ORDER = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
+
+/**
+ * Scans a video title for CEFR level markers (A1–C2).
+ * If a range is found (e.g. "A1-B1"), returns all levels in that range.
+ * Returns [] if none found.
+ * @param {string} title
+ * @returns {string[]}
+ */
+export function detectCEFRFromTitle(title) {
+  const found = [];
+  const re = /\b(A1|A2|B1|B2|C1|C2)\b/gi;
+  let m;
+  while ((m = re.exec(title)) !== null) {
+    const lvl = m[1].toUpperCase();
+    if (!found.includes(lvl)) found.push(lvl);
+  }
+  if (found.length === 0) return [];
+  const indices = found.map(l => CEFR_ORDER.indexOf(l));
+  const min = Math.min(...indices);
+  const max = Math.max(...indices);
+  return CEFR_ORDER.slice(min, max + 1);
+}
+
 // ─── Modal init ──────────────────────────────────────────────
 
 export function initImport() {
@@ -98,8 +124,10 @@ async function handleImport() {
 
     // Step 5: build video objects and save
     const now = Date.now();
+    const skipShorts = document.getElementById('import-skip-shorts')?.checked ?? true;
     const videos = allItems
       .filter(item => durationMap[item.videoId] !== 0) // skip live streams
+      .filter(item => !skipShorts || durationMap[item.videoId] > 60) // skip Shorts
       .map(item => ({
         videoId:        item.videoId,
         title:          item.title,
@@ -108,7 +136,7 @@ async function handleImport() {
         thumbnail:      item.thumbnail,
         publishedAt:    item.publishedAt,
         durationSeconds: durationMap[item.videoId] || 0,
-        difficulty:     'unrated',
+        difficulty:     detectCEFRFromTitle(item.title),
         tags:           [],
         addedAt:        now,
         watchedSeconds: 0,

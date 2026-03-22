@@ -36,8 +36,9 @@ export async function openPlayer(videoId) {
   document.getElementById('player-channel').textContent = video.channelTitle || '';
   document.getElementById('player-session-seconds').textContent = '0s';
 
-  const diffSelect = document.getElementById('player-difficulty');
-  diffSelect.value = video.difficulty || 'unrated';
+  const levels = video.difficulty || [];
+  document.querySelectorAll('#player-difficulty-checks input[type=checkbox]')
+    .forEach(cb => { cb.checked = levels.includes(cb.value); });
 
   const tagsInput = document.getElementById('player-tags');
   tagsInput.value = (video.tags || []).join(', ');
@@ -67,10 +68,10 @@ export function closePlayer() {
 
   // Save user edits to difficulty/tags
   if (currentVideoId) {
-    const diffSelect = document.getElementById('player-difficulty');
-    const tagsInput  = document.getElementById('player-tags');
+    const tagsInput = document.getElementById('player-tags');
     updateVideoUserFields(currentVideoId, {
-      difficulty: diffSelect.value,
+      difficulty: [...document.querySelectorAll('#player-difficulty-checks input[type=checkbox]:checked')]
+        .map(cb => cb.value),
       tags: tagsInput.value.split(',').map(t => t.trim()).filter(Boolean),
     });
   }
