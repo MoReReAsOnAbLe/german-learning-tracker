@@ -18,6 +18,9 @@
           <span class="logo-flag">🇩🇪</span>
           <span class="logo-text">Deutsch Tracker</span>
         </div>
+        <div class="auth-widget" id="auth-widget">
+          <button class="auth-signin-btn" id="auth-open-btn">Sign in / Sign up</button>
+        </div>
       </div>
 
       <nav class="sidebar-nav">
@@ -135,6 +138,65 @@
       </div>
       <div id="import-error" class="import-error hidden"></div>
       <div id="import-success" class="import-success hidden"></div>
+    </div>
+  </div>
+
+  <!-- Log Time Modal -->
+  <div id="log-time-modal" class="modal hidden" role="dialog" aria-modal="true" aria-label="Log watch time">
+    <div class="modal-backdrop" id="log-time-backdrop"></div>
+    <div class="modal-content log-time-modal-content">
+      <button class="modal-close" id="log-time-close" aria-label="Close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+      <h2 class="modal-title">Log Watch Time</h2>
+      <p class="modal-subtitle">Record time watched outside the app — TV, phone, Anki, etc.</p>
+      <div class="log-time-form">
+        <div class="log-time-row">
+          <label class="log-time-label" for="log-time-date">Date</label>
+          <input type="date" id="log-time-date" class="settings-input" />
+        </div>
+        <div class="log-time-row">
+          <label class="log-time-label">Duration</label>
+          <div class="log-time-duration-row">
+            <input type="number" id="log-time-hours" class="settings-input log-time-num" min="0" max="24" placeholder="0" />
+            <span class="log-time-unit">h</span>
+            <input type="number" id="log-time-minutes" class="settings-input log-time-num" min="0" max="59" placeholder="0" />
+            <span class="log-time-unit">min</span>
+          </div>
+        </div>
+      </div>
+      <div id="log-time-error" class="import-error hidden"></div>
+      <div class="log-time-actions">
+        <button class="btn btn-surface" id="log-time-cancel">Cancel</button>
+        <button class="btn btn-accent" id="log-time-submit">Log Time</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Auth Modal -->
+  <div id="auth-modal" class="modal hidden" role="dialog" aria-modal="true" aria-label="Sign in or create account">
+    <div class="modal-backdrop" id="auth-backdrop"></div>
+    <div class="modal-content auth-modal-content">
+      <button class="modal-close" id="auth-close" aria-label="Close auth">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+      <h2 class="modal-title">Account</h2>
+      <p class="modal-subtitle">Save your progress and access it from any device.</p>
+      <div class="auth-tabs">
+        <button class="auth-tab-btn active" data-tab="signin">Sign In</button>
+        <button class="auth-tab-btn" data-tab="signup">Sign Up</button>
+      </div>
+      <div class="auth-tab-panel" id="auth-panel-signin">
+        <input type="email" id="auth-signin-email" class="settings-input" placeholder="Email" autocomplete="email" />
+        <input type="password" id="auth-signin-pass" class="settings-input" placeholder="Password" autocomplete="current-password" />
+        <button class="btn btn-accent" id="auth-signin-submit">Sign In</button>
+      </div>
+      <div class="auth-tab-panel hidden" id="auth-panel-signup">
+        <input type="email" id="auth-signup-email" class="settings-input" placeholder="Email" autocomplete="email" />
+        <input type="password" id="auth-signup-pass" class="settings-input" placeholder="Password (min 6 characters)" autocomplete="new-password" />
+        <button class="btn btn-accent" id="auth-signup-submit">Create Account</button>
+      </div>
+      <div class="auth-error" id="auth-error"></div>
     </div>
   </div>
 

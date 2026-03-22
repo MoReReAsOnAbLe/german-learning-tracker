@@ -2,9 +2,10 @@
  * stats.js — Dashboard page and sidebar stats.
  */
 
-import { getMeta, getSettings, getDailyLog, getVideos, getWatchSessions } from './store.js';
+import { getMeta, getSettings, getDailyLog, getVideos, getWatchSessions, logManualTime } from './store.js';
 
 const TOTAL_GOAL_HOURS = 1500;
+const MILESTONES = [50, 100, 200, 400, 600, 1000, 1500];
 
 // ─── Sidebar (always visible) ────────────────────────────────
 
@@ -14,14 +15,28 @@ export function updateSidebarStats() {
   const daily    = getDailyLog();
 
   const totalHours   = meta.totalSecondsWatched / 3600;
-  const goalPct      = Math.min(100, (totalHours / TOTAL_GOAL_HOURS) * 100);
   const todaySeconds = daily[todayStr()] || 0;
   const goalSeconds  = settings.dailyGoalMinutes * 60;
   const todayPct     = Math.min(100, (todaySeconds / goalSeconds) * 100);
 
+  // Milestone-based progress bar
+  const prevMilestone = MILESTONES.filter(m => totalHours >= m).pop() || 0;
+  const nextMilestone = MILESTONES.find(m => totalHours < m) || MILESTONES[MILESTONES.length - 1];
+  const milestonePct  = prevMilestone === nextMilestone
+    ? 100
+    : Math.min(100, ((totalHours - prevMilestone) / (nextMilestone - prevMilestone)) * 100);
+  const milestoneIdx  = MILESTONES.indexOf(nextMilestone) + 1; // 1-based
+
   setText('sidebar-total-hours', formatHours(totalHours));
-  setWidth('sidebar-progress-fill', goalPct);
-  setText('sidebar-progress-pct', `${goalPct.toFixed(1)}% of ${TOTAL_GOAL_HOURS.toLocaleString()}h goal`);
+  setWidth('sidebar-progress-fill', milestonePct);
+
+  if (totalHours >= TOTAL_GOAL_HOURS) {
+    setText('sidebar-progress-pct', '1,500h goal complete!');
+  } else {
+    setText('sidebar-progress-pct',
+      `${formatHours(totalHours)} / ${nextMilestone}h (milestone ${milestoneIdx}/${MILESTONES.length})`);
+  }
+
   setText('sidebar-streak', `${meta.currentStreak} ${meta.currentStreak === 1 ? 'day' : 'days'}`);
   setText('sidebar-today', `${Math.round(todaySeconds / 60)} / ${settings.dailyGoalMinutes} min`);
   setWidth('sidebar-today-fill', todayPct);
@@ -34,8 +49,21 @@ export function renderDashboard(container) {
 
   const header = document.createElement('div');
   header.className = 'page-header';
-  header.innerHTML = '<h1 class="page-title">Dashboard</h1>';
+  header.innerHTML = `
+    <h1 class="page-title">Dashboard</h1>
+    <button class="btn btn-surface" id="open-log-time-btn">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <circle cx="12" cy="12" r="10"/>
+        <polyline points="12 6 12 12 16 14"/>
+      </svg>
+      Log Time
+    </button>
+  `;
   container.appendChild(header);
+
+  header.querySelector('#open-log-time-btn')?.addEventListener('click', () => {
+    document.getElementById('log-time-modal').classList.remove('hidden');
+  });
 
   const grid = document.createElement('div');
   grid.className = 'dashboard-grid';
@@ -54,11 +82,18 @@ export function renderDashboard(container) {
   const todayMins    = Math.round(todaySeconds / 60);
   const goalComplete = todaySeconds >= goalSeconds;
 
-  // Progress ring card
+  // ── Progress ring + milestones card ──────────────────────
+  const prevMilestone = MILESTONES.filter(m => totalHours >= m).pop() || 0;
+  const nextMilestone = MILESTONES.find(m => totalHours < m) || MILESTONES[MILESTONES.length - 1];
+  const betweenPct    = prevMilestone === nextMilestone
+    ? 100
+    : Math.min(100, ((totalHours - prevMilestone) / (nextMilestone - prevMilestone)) * 100);
+
   const ringCard = document.createElement('div');
   ringCard.className = 'card progress-ring-card';
-  const circumference = 2 * Math.PI * 68; // r=68
+  const circumference = 2 * Math.PI * 68;
   const offset = circumference - (goalPct / 100) * circumference;
+
   ringCard.innerHTML = `
     <div class="card-title">Total Progress</div>
     <div class="progress-ring-wrap">
@@ -74,10 +109,33 @@ export function renderDashboard(container) {
       </div>
     </div>
     <span class="ring-goal-label">${goalPct.toFixed(2)}% toward fluency</span>
+
+    <div class="milestones-section">
+      <div class="milestones-track">
+        ${MILESTONES.map(m => {
+          const done    = totalHours >= m;
+          const current = m === nextMilestone && !done;
+          return `<div class="milestone-pill ${done ? 'done' : current ? 'current' : 'future'}" title="${m}h">
+            ${done ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" width="10" height="10"><polyline points="20 6 9 17 4 12"/></svg>` : ''}
+            ${m}h
+          </div>`;
+        }).join('')}
+      </div>
+      ${totalHours < TOTAL_GOAL_HOURS ? `
+        <div class="milestone-progress-wrap">
+          <div class="milestone-progress-bar">
+            <div class="milestone-progress-fill" style="width:${betweenPct.toFixed(1)}%"></div>
+          </div>
+          <div class="milestone-progress-label">
+            ${formatHours(totalHours - prevMilestone)} / ${nextMilestone - prevMilestone}h to next milestone
+          </div>
+        </div>` : `
+        <div class="milestone-complete-label">All milestones complete! 🎉</div>`}
+    </div>
   `;
   grid.appendChild(ringCard);
 
-  // Streak card
+  // ── Streak card ──────────────────────────────────────────
   const streakCard = document.createElement('div');
   streakCard.className = 'card streak-card';
   streakCard.innerHTML = `
@@ -88,7 +146,7 @@ export function renderDashboard(container) {
   `;
   grid.appendChild(streakCard);
 
-  // Daily goal card
+  // ── Daily goal card ──────────────────────────────────────
   const goalCard = document.createElement('div');
   goalCard.className = 'card daily-goal-card';
   goalCard.innerHTML = `
@@ -107,13 +165,13 @@ export function renderDashboard(container) {
   `;
   grid.appendChild(goalCard);
 
-  // Recently watched
+  // ── Recently watched ─────────────────────────────────────
   const recentCard = document.createElement('div');
   recentCard.className = 'card recent-card';
 
-  const sessions  = getWatchSessions();
-  const recentIds = [...new Set(
-    [...sessions].reverse().map(s => s.videoId)
+  const sessions   = getWatchSessions();
+  const recentIds  = [...new Set(
+    [...sessions].reverse().map(s => s.videoId).filter(Boolean)
   )].slice(0, 12);
   const recentVideos = recentIds.map(id => videos[id]).filter(Boolean);
 
@@ -141,6 +199,60 @@ export function renderDashboard(container) {
       scroll.appendChild(el);
     }
   }
+}
+
+// ─── Log Time modal init ─────────────────────────────────────
+
+export function initLogTime() {
+  // Set today's date as default
+  const dateInput = document.getElementById('log-time-date');
+  if (dateInput) dateInput.value = todayStr();
+
+  function closeModal() {
+    document.getElementById('log-time-modal').classList.add('hidden');
+    document.getElementById('log-time-error').classList.add('hidden');
+    // Reset date to today each open
+    if (dateInput) dateInput.value = todayStr();
+    const h = document.getElementById('log-time-hours');
+    const m = document.getElementById('log-time-minutes');
+    if (h) h.value = '';
+    if (m) m.value = '';
+  }
+
+  document.getElementById('log-time-close')?.addEventListener('click', closeModal);
+  document.getElementById('log-time-cancel')?.addEventListener('click', closeModal);
+  document.getElementById('log-time-backdrop')?.addEventListener('click', closeModal);
+
+  document.getElementById('log-time-submit')?.addEventListener('click', () => {
+    const dateVal = document.getElementById('log-time-date')?.value;
+    const hours   = parseInt(document.getElementById('log-time-hours')?.value  || '0', 10) || 0;
+    const mins    = parseInt(document.getElementById('log-time-minutes')?.value || '0', 10) || 0;
+    const totalSeconds = hours * 3600 + mins * 60;
+
+    const errEl = document.getElementById('log-time-error');
+
+    if (!dateVal) {
+      errEl.textContent = 'Please select a date.';
+      errEl.classList.remove('hidden');
+      return;
+    }
+    if (totalSeconds < 60) {
+      errEl.textContent = 'Please enter at least 1 minute.';
+      errEl.classList.remove('hidden');
+      return;
+    }
+
+    logManualTime(dateVal, totalSeconds);
+    updateSidebarStats();
+
+    // Re-render dashboard if currently visible
+    const main = document.getElementById('main-content');
+    if (main?.querySelector('.dashboard-grid')) {
+      renderDashboard(main);
+    }
+
+    closeModal();
+  });
 }
 
 // ─── Helpers ─────────────────────────────────────────────────

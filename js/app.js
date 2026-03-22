@@ -6,36 +6,13 @@
  */
 
 import { boot } from './store.js';
-import { updateSidebarStats, renderDashboard } from './stats.js';
-import { renderLibrary, setVideoClickHandler } from './library.js';
+import { updateSidebarStats, renderDashboard, initLogTime } from './stats.js';
+import { renderLibrary, setVideoClickHandler, cleanupLibrary } from './library.js';
 import { renderCalendar } from './calendar.js';
 import { renderSettings } from './settings.js';
 import { initPlayer, openPlayer } from './player.js';
 import { initImport } from './import.js';
-
-// ─── Boot ────────────────────────────────────────────────────
-
-boot();
-updateSidebarStats();
-initPlayer();
-initImport();
-
-// Wire library's video-click to open the player
-setVideoClickHandler((videoId) => openPlayer(videoId));
-
-// Wire recently-watched video clicks on the dashboard
-document.getElementById('main-content').addEventListener('click', (e) => {
-  const card = e.target.closest('[data-video-id]');
-  if (card && card.classList.contains('recent-video-card')) {
-    openPlayer(card.dataset.videoId);
-  }
-});
-
-// Re-render library after a channel import
-window.addEventListener('channelImported', () => {
-  if (currentPage === 'library') navigate('library');
-  updateSidebarStats();
-});
+import { initAuth } from './auth.js';
 
 // ─── Router ──────────────────────────────────────────────────
 
@@ -50,6 +27,9 @@ function navigate(page) {
   });
 
   const main = document.getElementById('main-content');
+
+  // Clean up library selection state / bulk bar before switching pages
+  cleanupLibrary();
 
   switch (page) {
     case 'dashboard': renderDashboard(main); break;
@@ -70,11 +50,45 @@ window.addEventListener('hashchange', routeFromHash);
 
 // Nav link clicks
 document.querySelectorAll('.nav-item').forEach(a => {
-  a.addEventListener('click', (e) => {
+  a.addEventListener('click', () => {
     // Let the default hash change happen, then route
     setTimeout(routeFromHash, 0);
   });
 });
 
-// Initial route
-routeFromHash();
+// ─── Boot ────────────────────────────────────────────────────
+
+(async () => {
+  boot();
+  await initAuth();       // check session, load cloud data, wire auth modal
+  updateSidebarStats();
+  initPlayer();
+  initImport();
+  initLogTime();
+
+  // Wire library's video-click to open the player
+  setVideoClickHandler((videoId) => openPlayer(videoId));
+
+  // Wire recently-watched video clicks on the dashboard
+  document.getElementById('main-content').addEventListener('click', (e) => {
+    const card = e.target.closest('[data-video-id]');
+    if (card && card.classList.contains('recent-video-card')) {
+      openPlayer(card.dataset.videoId);
+    }
+  });
+
+  // Re-render library after a channel import
+  window.addEventListener('channelImported', () => {
+    if (currentPage === 'library') navigate('library');
+    updateSidebarStats();
+  });
+
+  // Re-render current page after auth state changes (sign in / sign out)
+  window.addEventListener('authChanged', () => {
+    updateSidebarStats();
+    routeFromHash();
+  });
+
+  // Initial route
+  routeFromHash();
+})();

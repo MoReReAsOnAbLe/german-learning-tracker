@@ -32,9 +32,13 @@ function readJSON(key, fallback) {
   }
 }
 
+let _cloudSyncHook = null;
+export function setCloudSyncHook(fn) { _cloudSyncHook = fn; }
+
 function writeJSON(key, value) {
   try {
     localStorage.setItem(key, JSON.stringify(value));
+    if (_cloudSyncHook) _cloudSyncHook();
   } catch (e) {
     if (e.name === 'QuotaExceededError') {
       console.error('localStorage quota exceeded. Cannot save data.');
@@ -235,6 +239,47 @@ export function recalculateMeta() {
   };
   writeJSON(KEYS.META, meta);
   return meta;
+}
+
+// ─── Manual time logging ─────────────────────────────────────
+
+/**
+ * Logs time watched outside the app (TV, phone, etc.).
+ * @param {string} dateStr  — YYYY-MM-DD
+ * @param {number} seconds  — total seconds to add
+ */
+export function logManualTime(dateStr, seconds) {
+  if (seconds < 1) return;
+  const now = Date.now();
+  const sessions = getWatchSessions();
+  sessions.push({ videoId: null, startedAt: now, endedAt: now, secondsWatched: seconds, manual: true });
+  writeJSON(KEYS.WATCH_SESSIONS, sessions);
+
+  const daily = getDailyLog();
+  daily[dateStr] = (daily[dateStr] || 0) + seconds;
+  writeJSON(KEYS.DAILY_LOG, daily);
+
+  recalculateMeta();
+}
+
+/**
+ * Marks a video as watched and credits its remaining unwatched duration
+ * to the time counter. Safe to call on already-completed videos (no-op).
+ */
+export function markVideoWatched(videoId) {
+  const videos = getVideos();
+  const v = videos[videoId];
+  if (!v) return;
+  const duration = v.durationSeconds || 0;
+  const already  = v.watchedSeconds  || 0;
+  const toAdd    = Math.max(0, duration - already);
+  if (toAdd > 0) {
+    endSession(videoId, toAdd, Date.now());
+  } else if (!v.completed) {
+    videos[videoId].completed = true;
+    writeJSON(KEYS.VIDEOS, videos);
+    recalculateMeta();
+  }
 }
 
 // ─── Data export / reset ─────────────────────────────────────

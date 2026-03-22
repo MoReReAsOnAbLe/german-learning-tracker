@@ -246,6 +246,12 @@ input, select, textarea { font-family: inherit; }
   margin-bottom: 28px;
 }
 
+.page-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .page-title {
   font-size: 22px;
   font-weight: 700;
@@ -300,6 +306,11 @@ input, select, textarea { font-family: inherit; }
 
 .btn-danger:hover:not(:disabled) {
   background: rgba(244, 67, 54, 0.25);
+}
+
+.btn-sm {
+  padding: 5px 11px;
+  font-size: 12.5px;
 }
 
 /* ============================================================
@@ -1346,6 +1357,282 @@ input, select, textarea { font-family: inherit; }
   }
 }
 
+/* ============================================================
+   Multi-select + Bulk Action Bar
+   ============================================================ */
+
+.video-card--selectable {
+  user-select: none;
+}
+
+.video-card--selectable:hover {
+  border-color: var(--accent);
+}
+
+.card-select-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.25);
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+  padding: 8px;
+  transition: background var(--t);
+}
+
+.card-select-overlay.checked {
+  background: rgba(255, 107, 53, 0.3);
+}
+
+.card-checkbox {
+  width: 22px;
+  height: 22px;
+  border-radius: 5px;
+  border: 2px solid rgba(255,255,255,0.7);
+  background: rgba(0,0,0,0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background var(--t), border-color var(--t);
+}
+
+.card-select-overlay.checked .card-checkbox {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.card-checkbox svg {
+  stroke: #fff;
+}
+
+/* Mark-watched hover button */
+.card-mark-watched-btn {
+  position: absolute;
+  bottom: 6px;
+  left: 6px;
+  background: rgba(76, 175, 80, 0.9);
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity var(--t), background var(--t);
+}
+
+.video-thumb-wrap:hover .card-mark-watched-btn {
+  opacity: 1;
+}
+
+.card-mark-watched-btn:hover {
+  background: var(--success);
+}
+
+/* Bulk action bar */
+.bulk-bar {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--elevated);
+  border: 1px solid var(--border-hover);
+  border-radius: var(--radius-lg);
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+  z-index: 100;
+  flex-wrap: wrap;
+  max-width: 90vw;
+}
+
+.bulk-bar.hidden {
+  display: none;
+}
+
+.bulk-count {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent);
+  white-space: nowrap;
+}
+
+.bulk-label {
+  font-size: 12.5px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.bulk-difficulty-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.bulk-difficulty-checks {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.bulk-diff-label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--text-muted);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.bulk-diff-label input {
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+/* ============================================================
+   Log Time Modal
+   ============================================================ */
+
+.log-time-modal-content {
+  max-width: 420px;
+}
+
+.log-time-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin: 20px 0 4px;
+}
+
+.log-time-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.log-time-label {
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--text);
+  white-space: nowrap;
+}
+
+.log-time-duration-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.log-time-num {
+  width: 70px !important;
+  text-align: center;
+}
+
+.log-time-unit {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.log-time-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 20px;
+}
+
+/* ============================================================
+   Milestones
+   ============================================================ */
+
+.milestones-section {
+  margin-top: 16px;
+  border-top: 1px solid var(--border);
+  padding-top: 14px;
+}
+
+.milestones-track {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.milestone-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  font-size: 11.5px;
+  font-weight: 600;
+  border: 1.5px solid transparent;
+  transition: all var(--t);
+}
+
+.milestone-pill.done {
+  background: rgba(76, 175, 80, 0.2);
+  border-color: var(--success);
+  color: var(--success);
+}
+
+.milestone-pill.done svg {
+  stroke: var(--success);
+}
+
+.milestone-pill.current {
+  background: var(--accent-dim);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.milestone-pill.future {
+  background: transparent;
+  border-color: var(--border);
+  color: var(--text-dim);
+}
+
+.milestone-progress-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.milestone-progress-bar {
+  height: 4px;
+  background: var(--elevated);
+  border-radius: 9999px;
+  overflow: hidden;
+}
+
+.milestone-progress-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 9999px;
+  transition: width 0.4s ease;
+}
+
+.milestone-progress-label {
+  font-size: 11.5px;
+  color: var(--text-muted);
+}
+
+.milestone-complete-label {
+  font-size: 13px;
+  color: var(--success);
+  font-weight: 600;
+  text-align: center;
+  padding: 4px 0;
+}
+
 @media (max-width: 640px) {
   #app {
     flex-direction: column;
@@ -1368,4 +1655,133 @@ input, select, textarea { font-family: inherit; }
   .calendar-stats-row {
     grid-template-columns: 1fr 1fr;
   }
+}
+
+/* ============================================================
+   Auth — sidebar widget + modal
+   ============================================================ */
+
+.auth-widget {
+  padding: 10px 16px 14px;
+  border-top: 1px solid var(--border);
+}
+
+.auth-signin-btn {
+  width: 100%;
+  padding: 7px 12px;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.auth-signin-btn:hover {
+  background: var(--accent-hover);
+}
+
+.auth-user {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.auth-email {
+  font-size: 12px;
+  color: var(--text-muted);
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.auth-signout-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  padding: 4px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.auth-signout-btn:hover {
+  color: var(--danger);
+  background: rgba(244, 67, 54, 0.1);
+}
+
+/* Auth modal */
+.auth-modal-content {
+  max-width: 380px;
+}
+
+.auth-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 20px;
+}
+
+.auth-tab-btn {
+  flex: 1;
+  padding: 9px;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  color: var(--text-muted);
+  font-size: 14px;
+  font-weight: 500;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.auth-tab-btn.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+.auth-tab-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.auth-tab-panel.hidden {
+  display: none;
+}
+
+.auth-tab-panel .settings-input {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.auth-tab-panel .btn {
+  margin-top: 4px;
+}
+
+.auth-error {
+  color: var(--success);
+  font-size: 13px;
+  margin-top: 12px;
+  min-height: 18px;
+  line-height: 1.4;
+}
+
+.auth-error:not(:empty) {
+  padding: 8px 10px;
+  background: rgba(76, 175, 80, 0.08);
+  border-radius: 6px;
+  border: 1px solid rgba(76, 175, 80, 0.2);
+}
+
+/* Error messages (actual errors, not success) — override with danger color via JS textContent checks
+   We use a data attribute set by auth.js to distinguish errors from success messages */
+.auth-error[data-type="error"] {
+  color: var(--danger);
+  background: rgba(244, 67, 54, 0.08);
+  border-color: rgba(244, 67, 54, 0.2);
 }
