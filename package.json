@@ -1,0 +1,12 @@
+{
+  "name": "german-learning-tracker",
+  "version": "1.0.0",
+  "description": "German language learning tracker with YouTube integration",
+  "private": true,
+  "scripts": {
+    "dev": "vercel dev"
+  },
+  "devDependencies": {
+    "vercel": "^37.0.0"
+  }
+}
