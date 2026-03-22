@@ -118,6 +118,8 @@ export async function initAuth() {
   if (session) {
     await loadFromCloud();
     updateAuthUI(session.user.email);
+  } else {
+    updateAuthUI(null);
   }
 
   // React to sign-in / sign-out across tabs or after OAuth redirects
