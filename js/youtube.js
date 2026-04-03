@@ -99,6 +99,46 @@ export async function fetchDurations(videoIds) {
   return res.json(); // { videoId: seconds, ... }
 }
 
+/**
+ * Fetches metadata for a YouTube playlist by ID.
+ * @param {string} playlistId
+ * @returns {{ playlistId, playlistTitle, channelTitle }}
+ */
+export async function fetchPlaylistInfo(playlistId) {
+  const res = await fetch(`/api/playlist-info?playlistId=${encodeURIComponent(playlistId)}`);
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || `Playlist info API error: ${res.status}`);
+  }
+  return res.json();
+}
+
+/**
+ * Extracts a YouTube playlist ID from a URL or raw ID string.
+ * Accepts:
+ *   youtube.com/playlist?list=PLxxx
+ *   youtu.be/... (not playlists, will fail gracefully)
+ *   PLxxx  (raw ID — starts with PL, RD, UL, FL, OL, LL, WL)
+ * @param {string} input
+ * @returns {string} playlist ID
+ */
+export function parsePlaylistId(input) {
+  const s = input.trim();
+  // Try as URL first
+  try {
+    const url = new URL(s.startsWith('http') ? s : `https://${s}`);
+    const listParam = url.searchParams.get('list');
+    if (listParam) return listParam;
+  } catch {
+    // Not a URL
+  }
+  // Raw playlist ID heuristic: known prefixes or alphanumeric starting with known patterns
+  if (/^(PL|RD|UL|FL|OL|LL|WL)[A-Za-z0-9_-]+$/.test(s)) {
+    return s;
+  }
+  throw new Error('Could not recognise a playlist ID or URL. Try pasting the full playlist URL.');
+}
+
 // ─── Utilities ───────────────────────────────────────────────
 
 /**

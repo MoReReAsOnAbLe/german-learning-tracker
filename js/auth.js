@@ -12,7 +12,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import {
   setCloudSyncHook,
   getSettings, getVideos, getWatchSessions,
-  getDailyLog, getChannels, getMeta, boot,
+  getDailyLog, getChannels, getPlaylists, getMeta, boot,
 } from './store.js';
 
 // ── Supabase config — replace with your project values ──────
@@ -28,6 +28,7 @@ const KEYS = {
   WATCH_SESSIONS: 'glt_watch_sessions',
   DAILY_LOG:      'glt_daily_log',
   CHANNELS:       'glt_channels',
+  PLAYLISTS:      'glt_playlists',
   META:           'glt_meta',
 };
 
@@ -57,6 +58,7 @@ async function syncToCloud() {
     watch_sessions: getWatchSessions(),
     daily_log:      getDailyLog(),
     channels:       getChannels(),
+    playlists:      getPlaylists(),
     meta:           getMeta(),
     updated_at:     new Date().toISOString(),
   });
@@ -95,6 +97,7 @@ export async function loadFromCloud() {
   if (data.watch_sessions) localStorage.setItem(KEYS.WATCH_SESSIONS, JSON.stringify(data.watch_sessions));
   if (data.daily_log)      localStorage.setItem(KEYS.DAILY_LOG,      JSON.stringify(data.daily_log));
   if (data.channels)       localStorage.setItem(KEYS.CHANNELS,       JSON.stringify(data.channels));
+  if (data.playlists)      localStorage.setItem(KEYS.PLAYLISTS,      JSON.stringify(data.playlists));
   if (data.meta)           localStorage.setItem(KEYS.META,           JSON.stringify(data.meta));
 
   boot();

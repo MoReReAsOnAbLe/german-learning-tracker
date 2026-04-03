@@ -114,20 +114,34 @@
   </div>
 
   <!-- Import Modal -->
-  <div id="import-modal" class="modal hidden" role="dialog" aria-modal="true" aria-label="Import channel">
+  <div id="import-modal" class="modal hidden" role="dialog" aria-modal="true" aria-label="Import channel or playlist">
     <div class="modal-backdrop" id="import-backdrop"></div>
     <div class="modal-content import-modal-content">
       <button class="modal-close" id="import-close" aria-label="Close import">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
       </button>
-      <h2 class="modal-title">Import YouTube Channel</h2>
-      <p class="modal-subtitle">Enter a YouTube channel handle or URL. All videos will be added to your library.</p>
+      <h2 class="modal-title">Import from YouTube</h2>
+      <div class="auth-tabs import-tabs">
+        <button class="auth-tab-btn active" data-import-tab="channel">Channel</button>
+        <button class="auth-tab-btn" data-import-tab="playlist">Playlist</button>
+      </div>
       <label class="import-option-row">
         <input type="checkbox" id="import-skip-shorts" checked />
         <span>Skip YouTube Shorts (≤ 60 seconds)</span>
       </label>
-      <div class="import-input-row">
-        <input type="text" id="import-input" class="import-channel-input" placeholder="@ComprehensibleGerman or youtube.com/@..." />
+      <div id="import-panel-channel">
+        <p class="modal-subtitle" style="margin-top:0">Enter a channel handle or URL. All videos will be added to your library.</p>
+        <div class="import-input-row">
+          <input type="text" id="import-input" class="import-channel-input" placeholder="@ComprehensibleGerman or youtube.com/@..." />
+        </div>
+      </div>
+      <div id="import-panel-playlist" class="hidden">
+        <p class="modal-subtitle" style="margin-top:0">Enter a playlist URL or ID. All videos will be added to your library.</p>
+        <div class="import-input-row">
+          <input type="text" id="import-playlist-input" class="import-channel-input" placeholder="youtube.com/playlist?list=PL... or playlist ID" />
+        </div>
+      </div>
+      <div class="import-action-row">
         <button id="import-btn" class="btn btn-accent">Import</button>
       </div>
       <div id="import-progress" class="import-progress hidden">

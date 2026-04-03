@@ -1250,6 +1250,12 @@ input, select, textarea { font-family: inherit; }
   margin-bottom: 16px;
 }
 
+.import-action-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 16px;
+}
+
 .import-channel-input {
   flex: 1;
   padding: 9px 12px;

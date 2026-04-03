@@ -11,6 +11,7 @@ const KEYS = {
   WATCH_SESSIONS: 'glt_watch_sessions',
   DAILY_LOG:      'glt_daily_log',
   CHANNELS:       'glt_channels',
+  PLAYLISTS:      'glt_playlists',
   META:           'glt_meta',
 };
 
@@ -97,7 +98,7 @@ export function bulkSaveVideos(arr) {
   for (const v of arr) {
     if (videos[v.videoId]) {
       // Merge: keep user edits, update API-sourced fields
-      videos[v.videoId] = {
+      const merged = {
         ...videos[v.videoId],
         title:           v.title,
         thumbnail:       v.thumbnail,
@@ -106,6 +107,11 @@ export function bulkSaveVideos(arr) {
         channelId:       v.channelId,
         channelTitle:    v.channelTitle,
       };
+      // Only set playlistId if not already set (preserve first import source)
+      if (v.playlistId && !merged.playlistId) {
+        merged.playlistId = v.playlistId;
+      }
+      videos[v.videoId] = merged;
     } else {
       videos[v.videoId] = v;
     }
@@ -184,6 +190,24 @@ export function removeChannel(channelId) {
   const channels = getChannels();
   delete channels[channelId];
   writeJSON(KEYS.CHANNELS, channels);
+}
+
+// ─── Playlists ────────────────────────────────────────────────
+
+export function getPlaylists() {
+  return readJSON(KEYS.PLAYLISTS, {});
+}
+
+export function savePlaylist(playlistObj) {
+  const playlists = getPlaylists();
+  playlists[playlistObj.playlistId] = playlistObj;
+  writeJSON(KEYS.PLAYLISTS, playlists);
+}
+
+export function removePlaylist(playlistId) {
+  const playlists = getPlaylists();
+  delete playlists[playlistId];
+  writeJSON(KEYS.PLAYLISTS, playlists);
 }
 
 // ─── Meta (cached aggregates) ────────────────────────────────
@@ -292,6 +316,7 @@ export function exportData() {
     sessions:  getWatchSessions(),
     dailyLog:  getDailyLog(),
     channels:  getChannels(),
+    playlists: getPlaylists(),
     meta:      getMeta(),
   };
 }

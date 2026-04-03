@@ -77,8 +77,12 @@ document.querySelectorAll('.nav-item').forEach(a => {
     }
   });
 
-  // Re-render library after a channel import
+  // Re-render library after a channel or playlist import
   window.addEventListener('channelImported', () => {
+    if (currentPage === 'library') navigate('library');
+    updateSidebarStats();
+  });
+  window.addEventListener('playlistImported', () => {
     if (currentPage === 'library') navigate('library');
     updateSidebarStats();
   });

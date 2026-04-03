@@ -2,7 +2,7 @@
  * library.js — Video library page: card grid, filters, search, multi-select.
  */
 
-import { getVideos, getChannels, updateVideoUserFields, markVideoWatched } from './store.js';
+import { getVideos, getChannels, getPlaylists, updateVideoUserFields, markVideoWatched } from './store.js';
 import { formatDuration } from './youtube.js';
 import { updateSidebarStats } from './stats.js';
 
@@ -12,7 +12,7 @@ let currentFilters = {
   level:       'all',
   search:      '',
   hideWatched: false,
-  channel:     'all',
+  source:      'all',
 };
 
 // Multi-select state
@@ -53,11 +53,20 @@ export function renderLibrary(container) {
   toolbar.innerHTML = `
     <input type="text" class="search-input" id="library-search"
            placeholder="Search videos…" value="${escapeAttr(currentFilters.search)}" />
-    <select class="channel-filter" id="channel-filter">
-      <option value="all">All channels</option>
-      ${Object.values(getChannels()).map(ch =>
-        `<option value="${escapeAttr(ch.channelId)}"${currentFilters.channel === ch.channelId ? ' selected' : ''}>${escapeHTML(ch.channelTitle)}</option>`
-      ).join('')}
+    <select class="channel-filter" id="source-filter">
+      <option value="all">All sources</option>
+      ${Object.values(getChannels()).length > 0 ? `
+        <optgroup label="Channels">
+          ${Object.values(getChannels()).map(ch =>
+            `<option value="ch:${escapeAttr(ch.channelId)}"${currentFilters.source === `ch:${ch.channelId}` ? ' selected' : ''}>${escapeHTML(ch.channelTitle)}</option>`
+          ).join('')}
+        </optgroup>` : ''}
+      ${Object.values(getPlaylists()).length > 0 ? `
+        <optgroup label="Playlists">
+          ${Object.values(getPlaylists()).map(pl =>
+            `<option value="pl:${escapeAttr(pl.playlistId)}"${currentFilters.source === `pl:${pl.playlistId}` ? ' selected' : ''}>${escapeHTML(pl.playlistTitle)}</option>`
+          ).join('')}
+        </optgroup>` : ''}
     </select>
     <div class="filter-chips" id="difficulty-chips">
       ${LEVELS.map(l => `
@@ -298,9 +307,9 @@ function attachLibraryEvents(container, grid, bulkBar) {
     renderGrid(grid);
   });
 
-  // Channel filter
-  container.querySelector('#channel-filter')?.addEventListener('change', (e) => {
-    currentFilters.channel = e.target.value;
+  // Source filter (channels + playlists)
+  container.querySelector('#source-filter')?.addEventListener('change', (e) => {
+    currentFilters.source = e.target.value;
     renderGrid(grid);
   });
 
@@ -351,11 +360,15 @@ function attachLibraryEvents(container, grid, bulkBar) {
 
 // ─── Filtering ───────────────────────────────────────────────
 
-export function applyFilters(videos, { level, search, hideWatched, channel }) {
+export function applyFilters(videos, { level, search, hideWatched, source }) {
   return videos.filter(v => {
     if (hideWatched && v.completed) return false;
-    if (channel && channel !== 'all') {
-      if (v.channelId !== channel) return false;
+    if (source && source !== 'all') {
+      if (source.startsWith('ch:')) {
+        if (v.channelId !== source.slice(3)) return false;
+      } else if (source.startsWith('pl:')) {
+        if (v.playlistId !== source.slice(3)) return false;
+      }
     }
     if (level && level !== 'all') {
       if (level === 'unrated') {

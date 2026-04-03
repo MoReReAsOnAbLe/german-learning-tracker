@@ -2,7 +2,7 @@
  * settings.js — Settings page: daily goal, channels list, export, reset.
  */
 
-import { getSettings, saveSettings, getChannels, removeChannel, exportData, resetData, getVideos, updateVideoUserFields } from './store.js';
+import { getSettings, saveSettings, getChannels, removeChannel, getPlaylists, removePlaylist, exportData, resetData, getVideos, updateVideoUserFields } from './store.js';
 import { updateSidebarStats } from './stats.js';
 import { detectCEFRFromTitle } from './import.js';
 import { getCurrentSession, pushToCloud, loadFromCloud, getLastSyncAt } from './auth.js';
@@ -17,6 +17,7 @@ export function renderSettings(container) {
 
   container.appendChild(buildGoalSection());
   container.appendChild(buildChannelsSection());
+  container.appendChild(buildPlaylistsSection());
   container.appendChild(buildCloudSection());
   container.appendChild(buildDataSection());
 }
@@ -106,6 +107,64 @@ function buildChannelsSection() {
         // Re-render the section
         const parent = section.parentElement;
         section.replaceWith(buildChannelsSection());
+      }
+    });
+  });
+
+  return section;
+}
+
+// ─── Playlists ────────────────────────────────────────────────
+
+function buildPlaylistsSection() {
+  const playlists = getPlaylists();
+  const list = Object.values(playlists);
+
+  const section = document.createElement('div');
+  section.className = 'settings-section';
+  section.id = 'playlists-section';
+
+  section.innerHTML = `
+    <div class="settings-section-title">Imported Playlists</div>
+    ${list.length === 0
+      ? '<p style="color:var(--text-muted);font-size:13px;padding:12px 0">No playlists imported yet. Use the Import button in the Video Library.</p>'
+      : `<table class="channels-table">
+          <thead>
+            <tr>
+              <th>Playlist</th>
+              <th>Channel</th>
+              <th>Videos</th>
+              <th>Last sync</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            ${list.map(pl => `
+              <tr data-playlist-id="${escapeAttr(pl.playlistId)}">
+                <td>${escapeHTML(pl.playlistTitle)}</td>
+                <td>${escapeHTML(pl.channelTitle || '')}</td>
+                <td>${pl.videoCount || 0}</td>
+                <td>${pl.lastSyncAt ? formatDate(pl.lastSyncAt) : '—'}</td>
+                <td>
+                  <button class="channel-remove-btn" data-playlist-id="${escapeAttr(pl.playlistId)}" title="Remove playlist">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/>
+                    </svg>
+                  </button>
+                </td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>`
+    }
+  `;
+
+  section.querySelectorAll('.channel-remove-btn[data-playlist-id]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const playlistId = btn.dataset.playlistId;
+      if (confirm('Remove this playlist from your settings? (Videos and watch history are kept.)')) {
+        removePlaylist(playlistId);
+        section.replaceWith(buildPlaylistsSection());
       }
     });
   });
